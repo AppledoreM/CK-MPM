@@ -713,6 +713,10 @@ template <MPMConfigType Config, typename Partition, typename ParticleArray>
 requires MPMFiniteDomainType<typename Partition::GridConfig_::Domain_> __global__ auto ActivateBlocksWithParticles(
 	Config, uint32_t particleCount, ParticleArray particle, Partition partition) -> void
 {
+	typedef typename Partition::GridConfig_ GridConfig;
+	typedef typename GridConfig::Domain_ Domain;
+	typedef typename Domain::DomainRange_ DomainRange;
+	constexpr int kRangeDim[] = {DomainRange::kDim_[0], DomainRange::kDim_[1], DomainRange::kDim_[2]};
 	constexpr Config config;
 	constexpr float invDx = config.GetInvDx();
 
@@ -730,7 +734,11 @@ requires MPMFiniteDomainType<typename Partition::GridConfig_::Domain_> __global_
 										 (cellIndex[1] - 2) / static_cast<int>(config.GetBlockSize()),
 										 (cellIndex[2] - 2) / static_cast<int>(config.GetBlockSize())};
 
-			  partition.Insert(blockIndex);
+			  if (blockIndex[0] >= 0 && blockIndex[1] >= 0 && blockIndex[2] >= 0 &&
+				  blockIndex[0] < kRangeDim[0] && blockIndex[1] < kRangeDim[1] && blockIndex[2] < kRangeDim[2])
+			  {
+				  partition.Insert(blockIndex);
+			  }
 			});
 	}
 }
